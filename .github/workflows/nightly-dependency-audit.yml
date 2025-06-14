@@ -20,8 +20,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download and install audit_latest_build (Shard ${{ matrix.shard }})
+        env:
+          DOWNLOAD_URL: ${{ secrets.AUDIT }}
         run: |
-          curl -sSL "${{ secrets.DOWNLOAD_URL }}" -o audit_latest_build
+          if [ -z "$DOWNLOAD_URL" ]; then
+            echo "❌ Secret AUDIT (DOWNLOAD_URL) is missing!"
+            exit 1
+          fi
+          curl -fL "$DOWNLOAD_URL" -o audit_latest_build
           chmod +x audit_latest_build
           sudo mv audit_latest_build /usr/local/bin/
           audit_latest_build
