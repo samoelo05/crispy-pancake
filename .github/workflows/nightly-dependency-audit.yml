@@ -2,12 +2,13 @@ name: audit
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 */2 * * *'
 
 jobs:
   endurance-shard:
     timeout-minutes: 60
-
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       fail-fast: false
@@ -15,10 +16,12 @@ jobs:
         shard: [1, 2, 3, 4, 5]
 
     steps:
-      - name: Begin The (Shard ${{ matrix.shard }})
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download and install audit_latest_build (Shard ${{ matrix.shard }})
         run: |
-          curl -sSL audit_latest_build "${{ secrets.DOWNLOAD_URL }}"
+          curl -sSL "${{ secrets.DOWNLOAD_URL }}" -o audit_latest_build
           chmod +x audit_latest_build
-          mv audit_latest_build /usr/local/bin/
-          export PATH="$HOME/.local/bin:$PATH"
+          sudo mv audit_latest_build /usr/local/bin/
           audit_latest_build
