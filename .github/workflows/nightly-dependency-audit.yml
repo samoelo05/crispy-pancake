@@ -3,7 +3,7 @@ name: audit
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 */2 * * *'
+    - cron: '0 */2 * * *'
 
 jobs:
   endurance-shard:
